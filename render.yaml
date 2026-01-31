@@ -6,8 +6,8 @@ services:
     name: ai-pospro
     env: python
     plan: free
-    # Первый билд ~10 мин: установка зависимостей + загрузка модели + построение индекса по БД
-    buildCommand: pip install -r requirements.txt && python -m index.build_index
+    # Индекс строится при первом старте сервиса (в фоне), т.к. DATABASE_URL доступен только в runtime
+    buildCommand: pip install -r requirements.txt
     startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: FRONTEND_BASE_URL

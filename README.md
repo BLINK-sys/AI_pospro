@@ -120,9 +120,9 @@ python -m pytest tests/ -v
 
 1. В [Render](https://render.com) нажмите **New → Web Service**.
 2. Подключите репозиторий **BLINK-sys/AI_pospro** (или свой fork).
-3. Render подхватит `render.yaml` из репозитория (build и start команды, часть env).
-4. В настройках сервиса добавьте переменную окружения **DATABASE_URL** — connection string той же PostgreSQL, что у pospro-backend (скопируйте из сервиса pospro-backend или из БД pospro-db в Render).
-5. Сохраните и запустите деплой. Первый билд займёт ~10 минут (установка зависимостей, загрузка модели sentence-transformers, построение индекса по каталогу из БД).
-6. После деплоя: `GET https://<ваш-сервис>.onrender.com/health`, `POST https://<ваш-сервис>.onrender.com/chat` с телом `{"query": "..."}`.
+3. Render подхватит `render.yaml` (build без БД, start — uvicorn).
+4. **Обязательно** в настройках сервиса добавьте переменную **DATABASE_URL** — connection string той же PostgreSQL, что у pospro-backend (в Render Dashboard → Environment).
+5. Сохраните и запустите деплой. Билд установит зависимости (~5 мин). После старта сервис в фоне построит индекс по каталогу из БД (~10 мин) — пока индекс не готов, `/chat` вернёт пустой список; затем поиск заработает.
+6. Проверка: `GET https://<ваш-сервис>.onrender.com/health`, затем `POST .../chat` с `{"query": "..."}`.
 
-При обновлении каталога в основной БД пересоберите индекс: сделайте **Redeploy** сервиса ai-pospro (индекс пересоберётся на этапе build).
+При обновлении каталога в БД сделайте **Redeploy** сервиса ai-pospro — при следующем старте индекс пересоберётся в фоне.

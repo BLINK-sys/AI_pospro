@@ -3,6 +3,7 @@ FastAPI-сервис AI: один эндпоинт чата.
 Запуск из корня AI_pospro: uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
 """
 import sys
+import threading
 from pathlib import Path
 
 root = Path(__file__).resolve().parent.parent
@@ -17,14 +18,29 @@ from fastapi.middleware.cors import CORSMiddleware
 from api.schemas import ChatRequest, ChatResponse, ProductOut
 from chat.chat_engine import run_chat
 
-# Настроить логирование
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+def _build_index_in_background() -> None:
+    """Строит индекс в фоне (для Render: DATABASE_URL доступен только в runtime)."""
+    try:
+        from index.build_index import build
+        build()
+    except Exception as e:
+        logger.exception("Background index build failed: %s", e)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("AI_pospro service starting")
+    from config import META_PATH, FAISS_INDEX_PATH, INDEX_DIR
+    from index.faiss_store import VECTORS_NPY_PATH
+    index_exists = META_PATH.exists() and (FAISS_INDEX_PATH.exists() or VECTORS_NPY_PATH.exists())
+    if not index_exists:
+        logger.info("Index not found, building in background (may take ~10 min)")
+        t = threading.Thread(target=_build_index_in_background, daemon=True)
+        t.start()
     yield
     logger.info("AI_pospro service shutting down")
 
