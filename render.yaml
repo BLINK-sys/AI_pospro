@@ -1,0 +1,16 @@
+# Render Blueprint для AI_pospro (отдельный репозиторий)
+# Подключите репозиторий в Render → New → Web Service (или Blueprint).
+# В Dashboard добавьте переменную DATABASE_URL (connection string той же БД, что у pospro-backend).
+services:
+  - type: web
+    name: ai-pospro
+    env: python
+    plan: free
+    # Первый билд ~10 мин: установка зависимостей + загрузка модели + построение индекса по БД
+    buildCommand: pip install -r requirements.txt && python -m index.build_index
+    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: FRONTEND_BASE_URL
+        value: https://pospro-frontend.onrender.com
+      - key: BACKEND_BASE_URL
+        value: https://pospro-backend.onrender.com

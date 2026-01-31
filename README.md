@@ -115,3 +115,14 @@ AI_pospro/
 cd AI_pospro
 python -m pytest tests/ -v
 ```
+
+## Деплой на Render
+
+1. В [Render](https://render.com) нажмите **New → Web Service**.
+2. Подключите репозиторий **BLINK-sys/AI_pospro** (или свой fork).
+3. Render подхватит `render.yaml` из репозитория (build и start команды, часть env).
+4. В настройках сервиса добавьте переменную окружения **DATABASE_URL** — connection string той же PostgreSQL, что у pospro-backend (скопируйте из сервиса pospro-backend или из БД pospro-db в Render).
+5. Сохраните и запустите деплой. Первый билд займёт ~10 минут (установка зависимостей, загрузка модели sentence-transformers, построение индекса по каталогу из БД).
+6. После деплоя: `GET https://<ваш-сервис>.onrender.com/health`, `POST https://<ваш-сервис>.onrender.com/chat` с телом `{"query": "..."}`.
+
+При обновлении каталога в основной БД пересоберите индекс: сделайте **Redeploy** сервиса ai-pospro (индекс пересоберётся на этапе build).
